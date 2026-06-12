@@ -105,13 +105,20 @@ export default function Home() {
       const v = window.speechSynthesis.getVoices()
       setVoices(v)
       const savedVoiceName = localStorage.getItem('stark_voice')
-      const preferred = (savedVoiceName && v.find(x => x.name === savedVoiceName))
-        || v.find(x => x.lang && x.lang.toLowerCase().startsWith('de') && x.name.toLowerCase().includes('male'))
-        || v.find(x => x.lang && x.lang.toLowerCase().startsWith('de'))
-        || v.find(x => x.name.toLowerCase().includes('daniel'))
+      const savedVoice = savedVoiceName && v.find(x => x.name === savedVoiceName)
+      // Only honor a saved voice if it's actually German — otherwise ignore it
+      const validSaved = savedVoice && savedVoice.lang && savedVoice.lang.toLowerCase().startsWith('de') ? savedVoice : null
+
+      const germanVoices = v.filter(x => x.lang && x.lang.toLowerCase().startsWith('de'))
+
+      const preferred = validSaved
+        || germanVoices.find(x => /male|markus|stefan|conrad/i.test(x.name))
+        || germanVoices[0]
         || v[0]
+
       setSelectedVoice(preferred)
       voiceRef.current = preferred
+      if (preferred) localStorage.setItem('stark_voice', preferred.name)
     }
     window.speechSynthesis.onvoiceschanged = load
     load()
@@ -215,6 +222,7 @@ export default function Home() {
   const speak = useCallback((text, onDone) => {
     window.speechSynthesis.cancel()
     const utt = new SpeechSynthesisUtterance(text)
+    utt.lang = (voiceRef.current && voiceRef.current.lang) || 'de-DE'
     if (voiceRef.current) utt.voice = voiceRef.current
     utt.rate = voiceRateRef.current; utt.pitch = 0.85; utt.volume = 1
     setIsSpeaking(true); speakingRef.current = true; setStatus('TRANSMITTING'); animateOrb(true)
