@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-void: #08050a;
+  --bg-deep: #120c10;
+  --bg-surface: #1a1218;
+  --bg-elevated: #241a20;
+  --bg-panel: #2b1f26;
+  --bg-glass: rgba(26, 18, 24, 0.85);
+
+  --cyan: #ffcc00;
+  --cyan-bright: #ffe066;
+  --cyan-dim: #cc9900;
+  --cyan-ghost: rgba(255, 204, 0, 0.07);
+  --cyan-glow: rgba(255, 204, 0, 0.18);
+  --cyan-border: rgba(255, 204, 0, 0.22);
+  --cyan-border-bright: rgba(255, 204, 0, 0.45);
+
+  --amber: #ff8c00;
+  --green: #00ff88;
+  --red: #ff4455;
+
+  --text-primary: #f5efe0;
+  --text-secondary: #a0907a;
+  --text-muted: #5a4a2e;
+  --text-accent: #ffcc00;
+
+  --border-subtle: rgba(255,255,255,0.03);
+  --border-dim: rgba(255,255,255,0.07);
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --sidebar-w: 300px;
+  --header-h: 52px;
+}
+
+html, body { height: 100%; background: var(--bg-void); color: var(--text-primary); font-family: var(--font-display); -webkit-font-smoothing: antialiased; overflow: hidden; }
+#__next { height: 100%; }
+::selection { background: var(--cyan-glow); color: var(--cyan); }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan-dim); }
+
+/* Mobile touch polish */
+button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+input, select { -webkit-tap-highlight-color: transparent; }
+* { -webkit-overflow-scrolling: touch; }
