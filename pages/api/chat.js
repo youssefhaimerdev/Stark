@@ -101,22 +101,35 @@ export default async function handler(req, res) {
     content: (m.content || '').slice(0, 600)
   }))
 
-  try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'system', content: systemPrompt }, ...trimmedMessages],
-        max_tokens: 450,
-        temperature: 0.7,
-      }),
-    })
-    const data = await response.json()
-    if (data.error) return res.status(400).json({ error: data.error.message })
-    const reply = data.choices[0].message.content.trim().slice(0, 600)
-    return res.status(200).json({ reply, usedSearch: searchWorked })
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to reach Groq API' })
+  const MODELS = [
+    'meta-llama/llama-4-scout-17b-16e-instruct',
+    'llama-3.3-70b-versatile',
+    'llama3-70b-8192',
+    'llama-3.1-8b-instant',
+  ]
+
+  const payload = {
+    messages: [{ role: 'system', content: systemPrompt }, ...trimmedMessages],
+    max_tokens: 450,
+    temperature: 0.7,
   }
+
+  let lastError = 'No model available'
+  for (const model of MODELS) {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ ...payload, model }),
+      })
+      const data = await response.json()
+      if (data.error) { lastError = data.error.message; continue }
+      const reply = data.choices[0].message.content.trim().slice(0, 600)
+      return res.status(200).json({ reply, usedSearch: searchWorked, model })
+    } catch (err) {
+      lastError = 'Network error'
+      continue
+    }
+  }
+  return res.status(500).json({ error: `Alle Modelle nicht verfügbar: ${lastError}` })
 }
