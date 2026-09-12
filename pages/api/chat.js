@@ -101,12 +101,34 @@ export default async function handler(req, res) {
     content: (m.content || '').slice(0, 600)
   }))
 
-  const MODELS = [
+  // Dynamically discover available models from Groq, then try them in preference order
+  // Preferred free-tier models first (as of 2026), enterprise/paid ones last
+  const PREFERRED_ORDER = [
+    'openai/gpt-oss-20b',
+    'openai/gpt-oss-120b',
+    'groq/compound-mini',
+    'groq/compound',
     'meta-llama/llama-4-scout-17b-16e-instruct',
     'llama-3.3-70b-versatile',
-    'llama3-70b-8192',
     'llama-3.1-8b-instant',
+    'llama3-70b-8192',
+    'qwen/qwen3-32b',
   ]
+
+  let modelsToTry = PREFERRED_ORDER
+  try {
+    const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    })
+    const modelsData = await modelsRes.json()
+    if (modelsData.data && modelsData.data.length > 0) {
+      const available = new Set(modelsData.data.map(m => m.id))
+      // Sort by preference order, then append any remaining available models not in our list
+      const preferred = PREFERRED_ORDER.filter(id => available.has(id))
+      const rest = modelsData.data.map(m => m.id).filter(id => !PREFERRED_ORDER.includes(id) && !id.includes('whisper') && !id.includes('guard') && !id.includes('orpheus'))
+      modelsToTry = preferred.length > 0 ? [...preferred, ...rest] : [...PREFERRED_ORDER, ...rest]
+    }
+  } catch (_) { /* use hardcoded list if discovery fails */ }
 
   const payload = {
     messages: [{ role: 'system', content: systemPrompt }, ...trimmedMessages],
@@ -115,7 +137,7 @@ export default async function handler(req, res) {
   }
 
   let lastError = 'No model available'
-  for (const model of MODELS) {
+  for (const model of modelsToTry) {
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
